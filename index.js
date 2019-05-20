@@ -58,10 +58,16 @@ app.get("/", (req, res) => {
     res.status(200).send("Hello World");
     console.log("Got GET Request");
 });
+const DButilsAzure = require('./DButils');
 
-app.listen(port,()=>{
-    console.log(`Listening on port ${port}`);
+app.listen(port, () => {
+    console.log(`Listening on port ${port}.`);
 });
+app.use('/api/scripts/checkuser', auth);
+app.use('/api/scripts/poi', poi);
+
+
+
 
 /**
  * save a POI to a user
