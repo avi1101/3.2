@@ -1,0 +1,16 @@
+{
+  "name": "ass3.2",
+  "version": "1.0.0",
+  "description": "assingment 3.2 in web development",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Avi Elly 308000017, Elad Cohen 308468784",
+  "license": "ISC",
+  "keywords": [],
+  "dependencies": {
+    "express": "^4.17.0",
+    "tedious": "^6.1.1"
+  }
+}
