@@ -4,7 +4,7 @@
     password = AviElad308
  */
 
-const db = require("./DButils.js");
+const DButilsAzure = require('./DButils.js');
 const express = require("express");
 var myParser = require("body-parser");
 const app = express();
@@ -58,13 +58,10 @@ app.get("/", (req, res) => {
     res.status(200).send("Hello World");
     console.log("Got GET Request");
 });
-const DButilsAzure = require('./DButils');
 
 app.listen(port, () => {
     console.log(`Listening on port ${port}.`);
 });
-app.use('/api/scripts/checkuser', auth);
-app.use('/api/scripts/poi', poi);
 
 
 
@@ -77,20 +74,20 @@ app.post("/save", (req, res)=>{
     var user = req.body.username;
     var poi = req.body.POIid;
     console.log("user: "+user+"\npoi: "+poi);
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            console.log("Getting User");
-            app.get('/select', function(req, res){
-                DButilsAzure.execQuery("SELECT $(user) FROM users")
-                    .then(function(result){
-                        res.send(result)
-                    })
-                    .catch(function(err){
-                        console.log(err)
-                        res.send(err)
-                    })
-            })
-            resolve({ id: 1, name: "user1" });
-        }, 3000);
+    var results = DButilsAzure.execQuery("INSERT INTO user_poi (POIID, username) VALUES(\'"+poi+"\',\'"+user+"\')");
+    results.then(function(result){
+        //console.log(result.toString());
+        // var mySubString = result.toString().substring(
+        //     result.toString().indexOf("\'") + 1,
+        //     result.toString().lastIndexOf("\'")
+        // );
+        // mySubString = mySubString +','+ poi;
+        // //console.log(mySubString);
+        // DButilsAzure.execQuery("UPDATE users SET POIs=\'"+mySubString+"\' WHERE username=\'"+user+"\'");
+        // res.status(200).send(result);
+        console.log("###########################");
+        console.log(result);
+        console.log(result.data);
     });
+
 });
