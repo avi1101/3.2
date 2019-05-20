@@ -30,9 +30,7 @@ console.log('connection on');
 
 exports.execQuery = function (query) {
     return new Promise(function (resolve, reject) {
-
         try {
-
             var ans = [];
             var properties = [];
 
