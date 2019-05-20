@@ -1,10 +1,11 @@
 const express = require("express");
 const app = express();
+
 //const router = express.Router();
 const DButilsAzure = require('../DButils');
 
 
-app.get('/3.2/scripts/poi/:id', (req,res)=> {
+app.get('/modules/poi/:id', (req,res)=> {
     let id = req.params.id;
     if(id==null){
         return res.status(400).send("id is null");}
@@ -16,6 +17,7 @@ app.get('/3.2/scripts/poi/:id', (req,res)=> {
             let POIresponse = response;
             let increaseQuery = `UPDATE pois SET viewed_num = '${views}' WHERE PID = '${id}'`;
             DButilsAzure.execQuery(increaseQuery).then((response) =>{
+                console.log(POIresponse[0]);
                 res.status(200).send(POIresponse[0]);
             }).catch((err) =>{
                 res.status(500).json({message:'Error on the server. try again later.'});
