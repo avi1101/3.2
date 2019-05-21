@@ -10,12 +10,13 @@ var myParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-    console.log(`Listening on port ${port}.`);
-});
+app.use(myParser.urlencoded({extended: true}));
 // app.use('./modules/checkuser', checkuser);
 // app.use('./modules/poi', poi);
 
+app.listen(port, () => {
+    console.log(`Listening on port ${port}.`);
+});
 
 
 /**
@@ -63,8 +64,6 @@ app.get("/viewedpois", (req, res) => {
         res.status(200).send("The user "+user+" has: "+x.length+" POIs in record");
     });
 });
-
-
 /*************************************************************************************
  *                                                                                   *
  *                                   Helper methods                                  *
