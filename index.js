@@ -9,13 +9,12 @@ const express = require("express");
 var myParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 3000;
-const DButilsAzure = require('./DButils');
 
 app.listen(port, () => {
     console.log(`Listening on port ${port}.`);
 });
-app.use('./modules/checkuser', checkuser);
-app.use('./modules/poi', poi);
+// app.use('./modules/checkuser', checkuser);
+// app.use('./modules/poi', poi);
 
 
 
@@ -64,3 +63,17 @@ app.get("/viewedpois", (req, res) => {
         res.status(200).send("The user "+user+" has: "+x.length+" POIs in record");
     });
 });
+
+
+/*************************************************************************************
+ *                                                                                   *
+ *                                   Helper methods                                  *
+ *                                                                                   *
+ *************************************************************************************/
+
+function IsExist(data, table)
+{
+    var query = "";
+    if(table === "users")
+        query = "SELECT * FROM user_poi WHERE username=\'"+data+"\'"
+}
