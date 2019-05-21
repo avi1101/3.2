@@ -196,8 +196,30 @@ app.post("/addrank", (req,res)=>{
     });
 });
 
-/*************************************************************************************
- *                                                                                   *
- *                                   Helper methods                                  *
- *                                                                                   *
- *************************************************************************************/
+
+app.get("/POI_getList", (req,res)=>{
+    var list = req.query.list;
+    for(var i = 0; i < list.length; i++) {
+        console.log(list[i]);
+    }
+    var empty = list.length == 0;
+    var results = null;
+    if(empty)
+        results = DButilsAzure.execQuery("SELECT * FROM pois");
+    else
+    {
+        var query = "SELECT * FROM pois WHERE ";
+        for(var i = 0; i < list.length; i++) {
+            if(i == 0)
+                query += "category=\'" + list[i] + "\'";
+            else
+                query += " OR category=\'" + list[i] + "\'";
+        }
+        results = DButilsAzure.execQuery(query);
+    }
+    results.then(function(result){
+        res.status(200).send(result);
+    }).catch(function(error){
+        res.status(200).send("one of the categories was invalid, please provide a valid category.");
+    });
+});
