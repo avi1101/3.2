@@ -9,11 +9,7 @@ const express = require("express");
 var myParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 3000;
-
 app.use(myParser.urlencoded({extended: true}));
-// app.use('./modules/checkuser', checkuser);
-// app.use('./modules/poi', poi);
-
 app.listen(port, () => {
     console.log(`Listening on port ${port}.`);
 });
@@ -62,7 +58,6 @@ app.get("/getrecommended", (req,res)=>{
 app.post("/save", (req, res)=>{
     var user = req.body.username;
     var poi = req.body.POIid;
-    console.log("user: "+user+"\npoi: "+poi);
     var results = DButilsAzure.execQuery("INSERT INTO user_poi (POIID, username) VALUES(\'" + poi + "\',\'" + user + "\')");
     results.then(function (result) {
         res.status(200).send("Point of Interest was registered!");
@@ -98,9 +93,7 @@ app.get("/viewedpois", (req, res) => {
     var user = req.query['username'];
     var results = DButilsAzure.execQuery("SELECT * FROM user_poi WHERE username=\'"+user+"\'");
     Promise.all([results]).then(function(values) {
-        //console.log(values);
         var x = values[0];
-        console.log(x.length);
         res.status(200).send("The user "+user+" has: "+x.length+" POIs in record");
     }).catch(function(error) {
         res.status(400).send("Could not find POI number for the given user");
@@ -151,6 +144,234 @@ app.get("/getAllPOIsBbyRank", (req, res)=>{
         res.status(200).send("Rank does not exist!");
     });
 });
+app.post("/adduser", (req, res)=>{
+    var username = req.body.username;
+    var password = req.body.password;
+    var first_name= req.body.first_name;
+    var last_name= req.body.last_name;
+    var question= req.body.question;
+    var answer= req.body.answer;
+    var city= req.body.city;
+    var country= req.body.country;
+    var email= req.body.email;
+    var interest1= req.body.interest1;
+    var interest2= req.body.interest2;
+    var results = DButilsAzure.execQuery("INSERT INTO users " +
+        "(username,password,first_name,last_name,question,answer,city,country,email,interest1,interest2) " +
+        "VALUES(\'"+username+"\',\'"+password+"\',\'"+first_name+"\',\'"+last_name+"\',\'"+question+"\',\'"
+        +answer+"\',\'"+city+"\',\'"+country+"\',\'"+email+"\',\'"+interest1+"\',\'"+interest2+"\')");
+    results.then(function(result){
+            res.status(200).send("User Add Confirmed");
+    }).catch(function(error) {
+        if(username.length>8){ res.status(400).send("User name to long");}
+        else{res.status(400).send("User already registered ");}
+    });
+});
+app.get('getpoi/:id', (req,res)=> {
+    let id = req.params.id;
+    if(id==null){
+        return res.status(400).send("id is null");}
+    let getidQuery = "SELECT * FROM pois WHERE ID = \'"+id+"\'";
+    let response= DButilsAzure.execQuery(getidQuery);
+    response.then(function(result){
+        if (result.length === 0) res.status(400).json({message: 'POI not in system'});
+        else {
+            let views = result[0].viewed_num + 1;
+            let increaseQuery = "UPDATE pois SET viewed_num =\'"+views+"\' WHERE ID = \'"+id+"\'";
+            res.status(200).send(result[0]);
+            DButilsAzure.execQuery(increaseQuery).then((response) =>{
+            }).catch((err) =>{
+                res.status(500).json({message:'Error on the server. try again later11.'});
+            });
+        }
+    })
+        .catch((err) =>{
+            res.status(500).json({message:err+'             Error on the server. try again later22.'});
+        });
+});
+
+app.get('getpoi/:name', (req,res)=> {
+    let name = req.params.name;
+    if(name==null){
+        return res.status(400).send("name is null");}
+    let getidQuery = "SELECT * FROM pois WHERE name = \'"+name+"\'";
+    let response= DButilsAzure.execQuery(getidQuery);
+    response.then(function(result){
+        if (result.length === 0) res.status(400).json({message: 'POI not in system'});
+        else {
+            let views = result[0].viewed_num + 1;
+            let increaseQuery = "UPDATE pois SET viewed_num =\'"+views+"\' WHERE name = \'"+name+"\'";
+            res.status(200).send(result[0]);
+            DButilsAzure.execQuery(increaseQuery).then((response) =>{
+            }).catch((err) =>{
+                res.status(500).json({message:'Error on the server. try again later11.'});
+            });
+        }
+    })
+        .catch((err) =>{
+            res.status(500).json({message:err+'             Error on the server. try again later22.'});
+        });
+});
+
+
+app.get("/getquestion/:username", (req,res)=> {
+    let username = req.params.username;
+    if(username==null){
+        return res.status(400).send("username was not entered");}
+    let getidQuery = "SELECT question FROM users WHERE username =\'"+username+"\'";
+    let response= DButilsAzure.execQuery(getidQuery);
+    response.then(function(result){
+        if (result.length === 0) res.status(400).json({message: 'user not in system'});
+        else {
+            res.status(200).send(result[0]);
+        }
+    })
+        .catch((err) =>{
+            res.status(500).json({message:'Error on the server. try again later.'});
+        });
+});
+app.get("/getpassword/:username", (req,res)=> {
+    let username = req.params.username;
+    if(username==null){
+        return res.status(400).send("username was not entered");}
+    let getidQuery = "SELECT password FROM users WHERE username =\'"+username+"\'";
+    let response= DButilsAzure.execQuery(getidQuery);
+    response.then(function(result){
+        if (result.length === 0) res.status(400).json({message: 'user not in system'});
+        else {
+            res.status(200).send(result[0].password);
+        }
+    })
+        .catch((err) =>{
+            res.status(500).json({message:'Error on the server. try again later.'});
+        });
+});
+app.get("/top3POI/:rank", (req,res)=> {
+    let rank = req.params.rank;
+    if(rank==null){
+        return res.status(400).send("rank was not entered");}
+    let getidQuery = "SELECT * FROM pois WHERE rank >= \'"+rank+"\'";
+    let response= DButilsAzure.execQuery(getidQuery);
+    response.then(function(result){
+
+        if (result.length ===0){ res.status(400).json({message: 'not enough POIs'});}
+        if (result.length<3){ res.status(200).send(result);}
+        else {
+            let first = Math.floor(Math.random() * (result.length - 1));
+            let second =  Math.floor(Math.random() * (result.length - 1));
+            while(second===first){
+                second =  Math.floor(Math.random() * (result.length - 1));
+            }
+            let third =  Math.floor(Math.random() * (result.length - 1));
+            while(third===first || third===second){
+                third =  Math.floor(Math.random() * (result.length - 1));
+            }
+            var newresult=[];
+            newresult[0]=result[first];
+            newresult[1]=result[second];
+            newresult[2]=result[third];
+            res.status(200).send(newresult);
+        }
+    })
+        .catch((err) =>{
+            res.status(500).json({message:err + 'Error on the server. try again later.'});
+        });
+});
+app.get("/last2POIs/:username",(req,res)=> {
+    let username = req.params.username;
+    if(username==null){
+         res.status(400).send("username was not entered");}
+    else{let getidQuery = "SELECT POIID FROM user_poi WHERE username = \'"+username+"\'";
+    let response= DButilsAzure.execQuery(getidQuery);
+    response.then(function(result){
+        if(result.length===0){res.status(400).send("no POI saved");}
+        else if(result.length<3){res.status(200).send(result);}
+        else{
+        var results2=[];
+            results2[0]=result[0];
+            results2[1]=result[1];
+            console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+result.length);
+        res.status(200).send(results2);}
+    })      .catch((err) =>{
+        res.status(500).json({message:err +'Error on the server. try again later.'});
+    });}
+});
+app.get("/interests/:username",(req,res)=> {
+    let username = req.params.username;
+    if(username==null){
+        res.status(400).send("username was not entered");}
+    else{let getidQuery = "SELECT interest1,interest2 FROM users WHERE username = \'"+username+"\'";
+        let response= DButilsAzure.execQuery(getidQuery);
+        response.then(function(result){
+            var ints = [];
+            ints[0]=result[0].interest1;
+            ints[1]=result[0].interest2;
+            res.status(200).send(ints);
+        })      .catch((err) =>{
+            res.status(500).json({message:err +'Error on the server. try again later.'});
+        });}
+});
+
+app.get("/getallPOI4user/:username",(req,res)=> {
+    let username = req.params.username;
+    if(username==null){
+        res.status(400).send("username was not entered");}
+    else{let getidQuery = "SELECT POIID FROM user_poi WHERE username = \'"+username+"\'";
+        let response= DButilsAzure.execQuery(getidQuery);
+        response.then(function(result){
+            res.status(200).send(result);
+        })      .catch((err) =>{
+            res.status(500).json({message:'Error on the server. try again later.'});
+        });}
+});
+app.post("/deletePOI4user", (req,res) => {
+    let username = req.body.username;
+    let POIID = req.body.POIID;
+    var results = DButilsAzure.execQuery("DELETE FROM user_poi WHERE  POIID=\'"+POIID+"\' and username=\'"+username+"\'");
+    results.then(function (result) {
+            res.status(200).send("POI deleted.");
+        }).catch(function(error){
+            res.status(500).send("Could not delete the POI");
+        });
+});
+
+app.get("/login/:username/:password",(req,res)=> {
+    let username = req.params.username;
+    let password = req.params.password;
+    if(username==null){
+        res.status(400).send("username was not entered");}
+    else{let getidQuery = "SELECT interest1,interest2 FROM users WHERE username = \'"+username+"\'";
+        let response= DButilsAzure.execQuery(getidQuery);
+        response.then(function(result){
+            var ints = [];
+            ints[0]=result[0].interest1;
+            ints[1]=result[0].interest2;
+            res.status(200).send(ints);
+        })      .catch((err) =>{
+            res.status(500).json({message:err +'Error on the server. try again later.'});
+        });}
+});
+/*
+app.post("/resetpass", (req, res)=>{
+    var username = req.body.username;
+    var answer = req.body.answer;
+    var newpass = req.body.newpassword;
+    var results = DButilsAzure.execQuery("SELECT answer FROM users WHERE username = \'"+username+"\'");
+    results.then(function (result) {
+        if(result[0].answer===answer) {
+            var results2 = DButilsAzure.execQuery("UPDATE users SET password =  \'" + newpass + "\' WHERE username = \'" + username + "\'");
+            results2.then(function (result) {
+                res.status(200).send("password updated");
+            }).catch(function (error) {
+                res.status(400).send("could not update try again later");
+            });
+            res.status(200).send("password updated!");
+        }
+        else{res.status(400).send("wrong answer");}
+    }).catch(function(error) {
+        res.status(400).send("could not update try again later");
+    });
+});*/
 
 /**
  * update POI , add rank and review
@@ -165,7 +386,7 @@ app.post("/addrank", (req,res)=>{
     var day = dateObj.getUTCDate();
     var year = dateObj.getUTCFullYear();
     var newdate = year + "/" + month + "/" + day;
-    console.log(poi+", "+rank+", "+review)+", "+newdate;
+    console.log(poi+", "+rank+", "+review+", "+newdate);
     var n = 0;
     var r = 0;
     var results = DButilsAzure.execQuery("SELECT * FROM pois WHERE ID=\'"+poi+"\'");
