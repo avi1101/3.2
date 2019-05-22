@@ -11,7 +11,10 @@
   "keywords": [],
   "dependencies": {
     "express": "^4.17.0",
+    "fs-mode": "^1.0.1",
+    "read-xml": "^3.0.0",
     "tedious": "^6.1.1",
-    "tedious-connection-pool": "^1.0.5"
+    "tedious-connection-pool": "^1.0.5",
+    "xml2js": "^0.4.19"
   }
 }

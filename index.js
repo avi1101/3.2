@@ -8,7 +8,10 @@ const DButilsAzure = require('./DButils.js');
 const express = require("express");
 var myParser = require("body-parser");
 const app = express();
+const xml2js = require('xml2js');
+const fs = require('fs-mode');
 const port = process.env.PORT || 3000;
+var countries = getCountries();
 app.use(myParser.urlencoded({extended: true}));
 app.listen(port, () => {
     console.log(`Listening on port ${port}.`);
@@ -42,7 +45,7 @@ app.get("/getrecommended", (req,res)=>{
     // var pro_cat2 = DButilsAzure.execQuery("SELECT *, MAX(rank) FROM pois WHERE category=\'"+cat2+"\'");
 
     Promise.all([pro_cat1, pro_cat2]).then(function(values){
-        var list = {};
+        let list = {};
         list.cat1 = values[0];
         list.cat2 = values[1];
         res.status(200).send(list);
@@ -59,9 +62,9 @@ app.post("/save", (req, res)=>{
     var user = req.body.username;
     var poi = req.body.POIid;
     var results = DButilsAzure.execQuery("INSERT INTO user_poi (POIID, username) VALUES(\'" + poi + "\',\'" + user + "\')");
-    results.then(function (result) {
+    results.then(function () {
         res.status(200).send("Point of Interest was registered!");
-    }).catch(function(error) {
+    }).catch(function() {
         res.status(400).send("Could not add POI to the user");
     });
 });
@@ -156,16 +159,25 @@ app.post("/adduser", (req, res)=>{
     var email= req.body.email;
     var interest1= req.body.interest1;
     var interest2= req.body.interest2;
+    var interestrest= req.body.interests;
+    if(username.length<3 || username.length>8 || !(/^[a-zA-Z]+$/.test(username))){
+        res.status(400).send("username not according to requests")
+    }
+    else if(password.length<5 || password.length>10 || !(/^[a-zA-Z0-9]+$/.test(password))){
+        res.status(400).send("password not according to requests")
+    }
+    else if(!countries.includes(country)){  res.status(400).send("country not valid")}
+    else{
     var results = DButilsAzure.execQuery("INSERT INTO users " +
-        "(username,password,first_name,last_name,question,answer,city,country,email,interest1,interest2) " +
+        "(username,password,first_name,last_name,question,answer,city,country,email,interest1,interest2,interestrest) " +
         "VALUES(\'"+username+"\',\'"+password+"\',\'"+first_name+"\',\'"+last_name+"\',\'"+question+"\',\'"
-        +answer+"\',\'"+city+"\',\'"+country+"\',\'"+email+"\',\'"+interest1+"\',\'"+interest2+"\')");
+        +answer+"\',\'"+city+"\',\'"+country+"\',\'"+email+"\',\'"+interest1+"\',\'"+interest2+"\',\'"+interestrest+"\')");
     results.then(function(result){
             res.status(200).send("User Add Confirmed");
     }).catch(function(error) {
         if(username.length>8){ res.status(400).send("User name to long");}
         else{res.status(400).send("User already registered ");}
-    });
+    });}
 });
 app.get('getpoi/:id', (req,res)=> {
     let id = req.params.id;
@@ -230,22 +242,8 @@ app.get("/getquestion/:username", (req,res)=> {
             res.status(500).json({message:'Error on the server. try again later.'});
         });
 });
-app.get("/getpassword/:username", (req,res)=> {
-    let username = req.params.username;
-    if(username==null){
-        return res.status(400).send("username was not entered");}
-    let getidQuery = "SELECT password FROM users WHERE username =\'"+username+"\'";
-    let response= DButilsAzure.execQuery(getidQuery);
-    response.then(function(result){
-        if (result.length === 0) res.status(400).json({message: 'user not in system'});
-        else {
-            res.status(200).send(result[0].password);
-        }
-    })
-        .catch((err) =>{
-            res.status(500).json({message:'Error on the server. try again later.'});
-        });
-});
+
+
 app.get("/top3POI/:rank", (req,res)=> {
     let rank = req.params.rank;
     if(rank==null){
@@ -281,17 +279,14 @@ app.get("/last2POIs/:username",(req,res)=> {
     let username = req.params.username;
     if(username==null){
          res.status(400).send("username was not entered");}
-    else{let getidQuery = "SELECT POIID FROM user_poi WHERE username = \'"+username+"\'";
+    else{let getidQuery = "SELECT TOP(2) * FROM user_poi WHERE username= \'"+username+"\' ORDER BY date ASC";
     let response= DButilsAzure.execQuery(getidQuery);
     response.then(function(result){
         if(result.length===0){res.status(400).send("no POI saved");}
-        else if(result.length<3){res.status(200).send(result);}
+        else if(result.length===1){res.status(200).send(result);}
         else{
-        var results2=[];
-            results2[0]=result[0];
-            results2[1]=result[1];
-            console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+result.length);
-        res.status(200).send(results2);}
+
+        res.status(200).send(result);}
     })      .catch((err) =>{
         res.status(500).json({message:err +'Error on the server. try again later.'});
     });}
@@ -351,6 +346,26 @@ app.get("/login/:username/:password",(req,res)=> {
             res.status(500).json({message:err +'Error on the server. try again later.'});
         });}
 });
+
+app.get("/getpassword/:username/:answer", (req,res)=> {
+    let username = req.params.username;
+    let answer = req.params.answer;
+    var results = DButilsAzure.execQuery("SELECT answer FROM users WHERE username = \'"+username+"\'");
+    results.then(function (result) {
+        if(result[0].answer===answer) {
+            var results2 = DButilsAzure.execQuery("SELECT password FROM users WHERE username = \'"+username+"\'");
+            results2.then(function (result2) {
+                res.status(200).send(result2[0].password);
+            }).catch(function (error) {res.status(400).send("could not update try again later");
+            });
+            res.status(200).send(result[0].password);
+        }
+        else{res.status(400).send("wrong answer");}
+    }).catch(function(error) {
+        res.status(400).send("could not update try again later");
+    });
+});
+
 /*
 app.post("/resetpass", (req, res)=>{
     var username = req.body.username;
@@ -422,3 +437,15 @@ app.post("/addrank", (req,res)=>{
  *                                   Helper methods                                  *
  *                                                                                   *
  *************************************************************************************/
+
+function getCountries() {
+    const parser = new xml2js.Parser({explicitArray: false});
+    const xml = fs.readFileSync(__dirname + '\\countries.xml', {encoding: 'utf-8'});
+    let counteries = [];
+    parser.parseString(xml,function(err,result){
+        let countries = JSON.parse(JSON.stringify(result))['Countries']['Country'];
+        for (key in countries)
+            counteries.push(countries[key]['Name']);
+    });
+    return counteries;
+}
