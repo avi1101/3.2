@@ -226,7 +226,9 @@ app.post("/adduser", (req, res)=>{
             else{res.status(400).send("User already registered ");}
         });}
 });
-app.get('getpoi/:id', (req,res)=> {
+
+
+app.get('getpoibyID/:id', (req,res)=> {
     let id = req.params.id;
     if(id==null){
         return res.status(400).send("id is null");}
@@ -249,7 +251,7 @@ app.get('getpoi/:id', (req,res)=> {
         });
 });
 
-app.get('getpoi/:name', (req,res)=> {
+app.get('getpoibyname/:name', (req,res)=> {
     let name = req.params.name;
     if(name==null){
         return res.status(400).send("name is null");}
@@ -291,7 +293,7 @@ app.get("/logged/getquestion/:username", (req,res)=> {
 });
 
 
-app.get("/top3POI/:rank", (req,res)=> {
+app.get("/rand3POI/:rank", (req,res)=> {
     let rank = req.params.rank;
     if(rank==null){
         return res.status(400).send("rank was not entered");}
@@ -338,7 +340,7 @@ app.get("/logged/last2POIs/:username",(req,res)=> {
             res.status(500).json({message:err +'Error on the server. try again later.'});
         });}
 });
-app.get("/logged/interests/:username",(req,res)=> {
+app.get("/logged/2interests/:username",(req,res)=> {
     let username = req.params.username;
     if(username==null){
         res.status(400).send("username was not entered");}
@@ -366,6 +368,7 @@ app.get("/logged/getallPOI4user/:username",(req,res)=> {
             res.status(500).json({message:'Error on the server. try again later.'});
         });}
 });
+
 app.post("/logged/deletePOI4user", (req,res) => {
     let username = req.body.username;
     let POIID = req.body.POIID;
@@ -484,15 +487,15 @@ app.get("/logged/POI_getList", (req,res)=>{
     for(var i = 0; i < list.length; i++) {
         console.log(list[i]);
     }
-    var empty = list.length == 0;
+    var empty = list.length === 0;
     var results = null;
     if(empty)
         results = DButilsAzure.execQuery("SELECT * FROM pois");
     else
     {
         var query = "SELECT * FROM pois WHERE ";
-        for(var i = 0; i < list.length; i++) {
-            if(i == 0)
+        for( i = 0; i < list.length; i++) {
+            if(i === 0)
                 query += "category=\'" + list[i] + "\'";
             else
                 query += " OR category=\'" + list[i] + "\'";
