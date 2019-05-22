@@ -3,18 +3,35 @@
     username = group1101
     password = AviElad308
  */
-// /logged/*
 //SELECT TOP (2) * FROM [dbo].[pois] WHERE category='cat' ORDER BY rank DESC;
 const DButilsAzure = require('./DButils.js');
 const express = require("express");
+const xml2js = require('xml2js');
 var myParser = require("body-parser");
-const app = express();// pushhhhhh
-const xml2js = require('xml2js');// pushhhhhh
 const fs = require('fs-mode');
+const jwt = require("jsonwebtoken");
+const app = express();
 const port = process.env.PORT || 3000;
 var countries = getCountries();
+
 app.use(myParser.urlencoded({extended: true}));
 app.use(express.json());
+app.use("/logged", (req, res, next)=>{
+    // const token = req.header("x-auth-token");
+    // // no token
+    // if (!token) res.status(401).send("Access denied. No token provided.");
+    // // verify token
+    // try {
+    //     const decoded = jwt.verify(token, secret);
+    //     req.decoded = decoded;
+    //     next(); //move on to the actual function
+    // } catch (exception) {
+    //     res.status(400).send("Invalid token.");
+    // }
+    next();
+});
+
+
 app.listen(port, () => {
     console.log(`Listening on port ${port}.`);
 });
@@ -47,7 +64,7 @@ app.get("/logged/getrecommended", (req,res)=>{
     // var pro_cat2 = DButilsAzure.execQuery("SELECT *, MAX(rank) FROM pois WHERE category=\'"+cat2+"\'");
 
     Promise.all([pro_cat1, pro_cat2]).then(function(values){
-        let list = {};
+        var list = {};
         list.cat1 = values[0];
         list.cat2 = values[1];
         res.status(200).send(list);
@@ -63,16 +80,16 @@ app.get("/logged/getrecommended", (req,res)=>{
 app.post("/logged/save", (req, res)=>{
     var user = req.body.username;
     var poi = req.body.POIid;
-    var results = DButilsAzure.execQuery("INSERT INTO user_poi (POIID, username, date) VALUES(\'" + poi + "\',\'" + user + "\',GETDATE())");
+    var results = DButilsAzure.execQuery("INSERT INTO user_poi (POIID, username) VALUES(\'" + poi + "\',\'" + user + "\')");
     results.then(function (result) {
         res.status(200).send("Point of Interest was registered!");
     }).catch(function(error) {
-        res.status(400).send("Could not add POI to the user, the username or the POI does not exist");
+        res.status(400).send("Could not add POI to the user");
     });
 });
 
 /**
- * delete a POI - only logged admin #TODO: logged admin
+ * delete a POI
  * @param = POIid
  */
 app.post("/logged/delete/:POIid", (req,res) => {
@@ -123,7 +140,7 @@ app.get("/logged/usergetPOI", (req, res) => {
 });
 
 /**
- * returns a list of POIs that beling to category
+ * returns a list of POIs that belong to category
  * @params = category
  */
 app.get("/getAllPOIsbyCat", (req, res)=>{
@@ -172,16 +189,16 @@ app.post("/adduser", (req, res)=>{
     }
     else if(!countries.includes(country)){  res.status(400).send("country not valid")}
     else{
-    var results = DButilsAzure.execQuery("INSERT INTO users " +
-        "(username,password,first_name,last_name,question,answer,city,country,email,interest1,interest2,interestrest) " +
-        "VALUES(\'"+username+"\',\'"+password+"\',\'"+first_name+"\',\'"+last_name+"\',\'"+question+"\',\'"
-        +answer+"\',\'"+city+"\',\'"+country+"\',\'"+email+"\',\'"+interest1+"\',\'"+interest2+"\',\'"+interestrest+"\')");
-    results.then(function(result){
+        var results = DButilsAzure.execQuery("INSERT INTO users " +
+            "(username,password,first_name,last_name,question,answer,city,country,email,interest1,interest2,interestrest) " +
+            "VALUES(\'"+username+"\',\'"+password+"\',\'"+first_name+"\',\'"+last_name+"\',\'"+question+"\',\'"
+            +answer+"\',\'"+city+"\',\'"+country+"\',\'"+email+"\',\'"+interest1+"\',\'"+interest2+"\',\'"+interestrest+"\')");
+        results.then(function(result){
             res.status(200).send("User Add Confirmed");
-    }).catch(function(error) {
-        if(username.length>8){ res.status(400).send("User name to long");}
-        else{res.status(400).send("User already registered ");}
-    });}
+        }).catch(function(error) {
+            if(username.length>8){ res.status(400).send("User name to long");}
+            else{res.status(400).send("User already registered ");}
+        });}
 });
 app.get('getpoi/:id', (req,res)=> {
     let id = req.params.id;
@@ -230,7 +247,7 @@ app.get('getpoi/:name', (req,res)=> {
 });
 
 
-app.get("/getquestion/:username", (req,res)=> {
+app.get("/logged/getquestion/:username", (req,res)=> {
     let username = req.params.username;
     if(username==null){
         return res.status(400).send("username was not entered");}
@@ -279,23 +296,23 @@ app.get("/top3POI/:rank", (req,res)=> {
             res.status(500).json({message:err + 'Error on the server. try again later.'});
         });
 });
-app.get("/last2POIs/:username",(req,res)=> {
+app.get("/logged/last2POIs/:username",(req,res)=> {
     let username = req.params.username;
     if(username==null){
-         res.status(400).send("username was not entered");}
+        res.status(400).send("username was not entered");}
     else{let getidQuery = "SELECT TOP(2) * FROM user_poi WHERE username= \'"+username+"\' ORDER BY date ASC";
-    let response= DButilsAzure.execQuery(getidQuery);
-    response.then(function(result){
-        if(result.length===0){res.status(400).send("no POI saved");}
-        else if(result.length===1){res.status(200).send(result);}
-        else{
+        let response= DButilsAzure.execQuery(getidQuery);
+        response.then(function(result){
+            if(result.length===0){res.status(400).send("no POI saved");}
+            else if(result.length===1){res.status(200).send(result);}
+            else{
 
-        res.status(200).send(result);}
-    })      .catch((err) =>{
-        res.status(500).json({message:err +'Error on the server. try again later.'});
-    });}
+                res.status(200).send(result);}
+        })      .catch((err) =>{
+            res.status(500).json({message:err +'Error on the server. try again later.'});
+        });}
 });
-app.get("/interests/:username",(req,res)=> {
+app.get("/logged/interests/:username",(req,res)=> {
     let username = req.params.username;
     if(username==null){
         res.status(400).send("username was not entered");}
@@ -311,7 +328,7 @@ app.get("/interests/:username",(req,res)=> {
         });}
 });
 
-app.get("/getallPOI4user/:username",(req,res)=> {
+app.get("/logged/getallPOI4user/:username",(req,res)=> {
     let username = req.params.username;
     if(username==null){
         res.status(400).send("username was not entered");}
@@ -323,15 +340,15 @@ app.get("/getallPOI4user/:username",(req,res)=> {
             res.status(500).json({message:'Error on the server. try again later.'});
         });}
 });
-app.post("/deletePOI4user", (req,res) => {
+app.post("/logged/deletePOI4user", (req,res) => {
     let username = req.body.username;
     let POIID = req.body.POIID;
     var results = DButilsAzure.execQuery("DELETE FROM user_poi WHERE  POIID=\'"+POIID+"\' and username=\'"+username+"\'");
     results.then(function (result) {
-            res.status(200).send("POI deleted.");
-        }).catch(function(error){
-            res.status(500).send("Could not delete the POI");
-        });
+        res.status(200).send("POI deleted.");
+    }).catch(function(error){
+        res.status(500).send("Could not delete the POI");
+    });
 });
 
 app.get("/login/:username/:password",(req,res)=> {
@@ -351,7 +368,7 @@ app.get("/login/:username/:password",(req,res)=> {
         });}
 });
 
-app.get("/getpassword/:username/:answer", (req,res)=> {
+app.get("/logged/getpassword/:username/:answer", (req,res)=> {
     let username = req.params.username;
     let answer = req.params.answer;
     var results = DButilsAzure.execQuery("SELECT answer FROM users WHERE username = \'"+username+"\'");
@@ -369,28 +386,6 @@ app.get("/getpassword/:username/:answer", (req,res)=> {
         res.status(400).send("could not update try again later");
     });
 });
-
-/*
-app.post("/resetpass", (req, res)=>{
-    var username = req.body.username;
-    var answer = req.body.answer;
-    var newpass = req.body.newpassword;
-    var results = DButilsAzure.execQuery("SELECT answer FROM users WHERE username = \'"+username+"\'");
-    results.then(function (result) {
-        if(result[0].answer===answer) {
-            var results2 = DButilsAzure.execQuery("UPDATE users SET password =  \'" + newpass + "\' WHERE username = \'" + username + "\'");
-            results2.then(function (result) {
-                res.status(200).send("password updated");
-            }).catch(function (error) {
-                res.status(400).send("could not update try again later");
-            });
-            res.status(200).send("password updated!");
-        }
-        else{res.status(400).send("wrong answer");}
-    }).catch(function(error) {
-        res.status(400).send("could not update try again later");
-    });
-});*/
 
 /**
  * update POI , add rank and review
@@ -410,27 +405,27 @@ app.post("/logged/addrank", (req,res)=>{
     var r = 0;
     var results = DButilsAzure.execQuery("SELECT * FROM pois WHERE ID=\'"+poi+"\'");
     results.then(function(result){
-       n = result[0].numranked;
-       r = result[0].rank;
-       r = r*n;
-       r = r+parseFloat(rank);
-       r = r/(n+1);
-       console.log(n+", "+r+", "+review);
-       var update = DButilsAzure.execQuery("UPDATE pois SET rank="+r+",numranked="+(n+1)+" WHERE ID="+poi);
-       update.then(function(up){
-           if(review !== "") {
-               var review_up = DButilsAzure.execQuery("INSERT INTO poi_review (POIID, review, date) VALUES(\'" + poi + "\',\'" + review + "\',\'" + newdate + "\')");
-               review_up.then(function (end) {
-                   res.status(200).send("Rank and review updated!");
-               }).catch(function (error) {
-                   res.status(200).send("Could not update the review");
-               });
-           }
-           else
-               res.status(200).send("Rank updated!");
-       }).catch(function(error){
-           res.status(200).send("Could not update the POI");
-       });
+        n = result[0].numranked;
+        r = result[0].rank;
+        r = r*n;
+        r = r+parseFloat(rank);
+        r = r/(n+1);
+        console.log(n+", "+r+", "+review);
+        var update = DButilsAzure.execQuery("UPDATE pois SET rank="+r+",numranked="+(n+1)+" WHERE ID="+poi);
+        update.then(function(up){
+            if(review !== "") {
+                var review_up = DButilsAzure.execQuery("INSERT INTO poi_review (POIID, review, date) VALUES(\'" + poi + "\',\'" + review + "\',\'" + newdate + "\')");
+                review_up.then(function (end) {
+                    res.status(200).send("Rank and review updated!");
+                }).catch(function (error) {
+                    res.status(200).send("Could not update the review");
+                });
+            }
+            else
+                res.status(200).send("Rank updated!");
+        }).catch(function(error){
+            res.status(200).send("Could not update the POI");
+        });
     }).catch(function(error){
         res.status(200).send("Could not update the POI");
     });
@@ -438,9 +433,7 @@ app.post("/logged/addrank", (req,res)=>{
 
 
 app.get("/logged/POI_getList", (req,res)=>{
-    //var list = req.query.list;
     var list = req.body;
-    console.log(req.body);
     for(var i = 0; i < list.length; i++) {
         console.log(list[i]);
     }
