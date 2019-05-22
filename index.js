@@ -3,6 +3,7 @@
     username = group1101
     password = AviElad308
  */
+// /logged/*
 //SELECT TOP (2) * FROM [dbo].[pois] WHERE category='cat' ORDER BY rank DESC;
 const DButilsAzure = require('./DButils.js');
 const express = require("express");
@@ -10,6 +11,7 @@ var myParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 3000;
 app.use(myParser.urlencoded({extended: true}));
+app.use(express.json());
 app.listen(port, () => {
     console.log(`Listening on port ${port}.`);
 });
@@ -31,7 +33,7 @@ app.get("/categories", (req,res)=>{
  * this method gets 2 categories and return the 2 maximum ranked POIs in the categories
  * @params = category1, category2
  */
-app.get("/getrecommended", (req,res)=>{
+app.get("/logged/getrecommended", (req,res)=>{
     var cat1 = req.query['category1'];
     var cat2 = req.query['category2'];
 
@@ -55,22 +57,22 @@ app.get("/getrecommended", (req,res)=>{
  * save a POI to a user
  * @param = JSON ({username, POIid})
  */
-app.post("/save", (req, res)=>{
+app.post("/logged/save", (req, res)=>{
     var user = req.body.username;
     var poi = req.body.POIid;
-    var results = DButilsAzure.execQuery("INSERT INTO user_poi (POIID, username) VALUES(\'" + poi + "\',\'" + user + "\')");
+    var results = DButilsAzure.execQuery("INSERT INTO user_poi (POIID, username, date) VALUES(\'" + poi + "\',\'" + user + "\',GETDATE())");
     results.then(function (result) {
         res.status(200).send("Point of Interest was registered!");
     }).catch(function(error) {
-        res.status(400).send("Could not add POI to the user");
+        res.status(400).send("Could not add POI to the user, the username or the POI does not exist");
     });
 });
 
 /**
- * delete a POI
+ * delete a POI - only logged admin #TODO: logged admin
  * @param = POIid
  */
-app.post("/delete/:POIid", (req,res) => {
+app.post("/logged/delete/:POIid", (req,res) => {
     var poi = req.params.POIid;
     var results = DButilsAzure.execQuery("DELETE FROM user_poi WHERE POIID=\'"+poi+"\'");
     results.then(function (result) {
@@ -89,7 +91,7 @@ app.post("/delete/:POIid", (req,res) => {
  * returns the number of viewed POIs of a user
  * @params = user
  */
-app.get("/viewedpois", (req, res) => {
+app.get("/logged/viewedpois", (req, res) => {
     var user = req.query['username'];
     var results = DButilsAzure.execQuery("SELECT * FROM user_poi WHERE username=\'"+user+"\'");
     Promise.all([results]).then(function(values) {
@@ -104,7 +106,7 @@ app.get("/viewedpois", (req, res) => {
  * returns a list of all the POIs that the given user has registered
  * @parsms = user
  */
-app.get("/usergetPOI", (req, res) => {
+app.get("/logged/usergetPOI", (req, res) => {
     var user = req.query['username'];
     var results = DButilsAzure.execQuery("SELECT * FROM user_poi WHERE username=\'"+user+"\'");
     results.then(function(result){
@@ -144,6 +146,8 @@ app.get("/getAllPOIsBbyRank", (req, res)=>{
         res.status(200).send("Rank does not exist!");
     });
 });
+
+
 app.post("/adduser", (req, res)=>{
     var username = req.body.username;
     var password = req.body.password;
@@ -377,7 +381,7 @@ app.post("/resetpass", (req, res)=>{
  * update POI , add rank and review
  * @params = JSON(POI, rank, review)
  */
-app.post("/addrank", (req,res)=>{
+app.post("/logged/addrank", (req,res)=>{
     var poi = req.body.POIid;
     var rank = req.body.rank;
     var review = req.body.review;
@@ -418,8 +422,10 @@ app.post("/addrank", (req,res)=>{
 });
 
 
-app.get("/POI_getList", (req,res)=>{
-    var list = req.query.list;
+app.get("/logged/POI_getList", (req,res)=>{
+    //var list = req.query.list;
+    var list = req.body;
+    console.log(req.body);
     for(var i = 0; i < list.length; i++) {
         console.log(list[i]);
     }
