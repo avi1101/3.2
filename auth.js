@@ -50,8 +50,10 @@ router.post("/adduser", (req, res)=>{
     var password = req.body.password;
     var first_name= req.body.first_name;
     var last_name= req.body.last_name;
-    var question= req.body.question;
-    var answer= req.body.answer;
+    var question1= req.body.question;
+    var answer1= req.body.answer;
+    var question2= req.body.question;
+    var answer2= req.body.answer;
     var city= req.body.city;
     var country= req.body.country;
     var email= req.body.email;
@@ -68,8 +70,20 @@ router.post("/adduser", (req, res)=>{
     else{
         var results = DButilsAzure.execQuery("INSERT INTO users " +
             "(username,password,first_name,last_name,question,answer,city,country,email,interest1,interest2,interestrest) " +
-            "VALUES(\'"+username+"\',\'"+password+"\',\'"+first_name+"\',\'"+last_name+"\',\'"+question+"\',\'"
-            +answer+"\',\'"+city+"\',\'"+country+"\',\'"+email+"\',\'"+interest1+"\',\'"+interest2+"\',\'"+interestrest+"\')");
+            "VALUES(\'"+username+"\'," +
+            "\'"+password+ "\'," +
+            "\'"+first_name+"\'," +
+            "\'"+last_name+"\'," +
+            "\'"+question1+"\'," +
+            "\'"+answer1+"\'," +
+            "\'"+question2+"\'," +
+            "\'"+answer2+"\'," +
+            "\'"+city+"\'," +
+            "\'"+country+"\'," +
+            "\'"+email+"\'," +
+            "\'"+interest1+"\'," +
+            "\'"+interest2+"\'," +
+            "\'"+interestrest+"\')");
         results.then(function(result){
             res.status(200).send("User Add Confirmed");
         }).catch(function(error) {
@@ -77,7 +91,6 @@ router.post("/adduser", (req, res)=>{
             else{res.status(400).send("User already registered ");}
         });}
 });
-
 function getCountries() {
     const parser = new xml2js.Parser({explicitArray: false});
     const xml = fs.readFileSync(__dirname + '\\countries.xml', {encoding: 'utf-8'});

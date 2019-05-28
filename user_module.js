@@ -197,18 +197,19 @@ router.post("/logged/deletePOI4user", (req,res) => {
 });
 
 
-router.get("/logged/getpassword/:username/:answer", (req,res)=> {
+router.get("/logged/getpassword/:username/:answer1/:answer2", (req,res)=> {
     let username = req.params.username;
-    let answer = req.params.answer;
-    var results = DButilsAzure.execQuery("SELECT answer FROM users WHERE username = \'"+username+"\'");
+    let answer1 = req.params.answer1;
+    let answer2 = req.params.answer2;
+    var results = DButilsAzure.execQuery("SELECT answer1,answer2 FROM users WHERE username = \'"+username+"\'");
     results.then(function (result) {
-        if(result[0].answer===answer) {
+        if(result[0].answer1.equals(answer1) || result[0].answer2.equals(answer2)) {
             var results2 = DButilsAzure.execQuery("SELECT password FROM users WHERE username = \'"+username+"\'");
             results2.then(function (result2) {
                 res.status(200).send(result2[0].password);
             }).catch(function (error) {res.status(400).send("could not update try again later");
             });
-            //res.status(200).send(result[0].password);
+            res.status(200).send(result[0].password);
         }
         else{res.status(400).send("wrong answer");}
     }).catch(function(error) {
