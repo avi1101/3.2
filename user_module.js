@@ -123,7 +123,7 @@ router.get("/logged/getquestion/:username", (req,res)=> {
     let username = req.params.username;
     if(username==null){
         return res.status(400).send("username was not entered");}
-    let getidQuery = "SELECT question FROM users WHERE username =\'"+username+"\'";
+    let getidQuery = "SELECT question1,question2 FROM users WHERE username =\'"+username+"\'";
     let response= DButilsAzure.execQuery(getidQuery);
     response.then(function(result){
         if (result.length === 0) res.status(400).json({message: 'user not in system'});
@@ -207,12 +207,12 @@ router.get("/logged/getpassword/:username/:answer1/:answer2", (req,res)=> {
             var results2 = DButilsAzure.execQuery("SELECT password FROM users WHERE username = \'"+username+"\'");
             results2.then(function (result2) {
                 res.status(200).send(result2[0].password);
-            }).catch(function (error) {res.status(400).send("could not update try again later");
+            }).catch(function (error) {res.status(400).send("could not return try again later");
             });
             res.status(200).send(result[0].password);
         }
         else{res.status(400).send("wrong answer");}
     }).catch(function(error) {
-        res.status(400).send("could not update try again later");
+        res.status(400).send("could not ret try again later");
     });
 });
