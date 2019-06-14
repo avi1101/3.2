@@ -119,7 +119,7 @@ router.get('/getpoibyID/:id', (req,res)=> {
         });
 });
 
-router.get("/logged/getquestion/:username", (req,res)=> {
+router.get("/getquestion/:username", (req,res)=> {
     let username = req.params.username;
     if(username==null){
         return res.status(400).send("username was not entered");}

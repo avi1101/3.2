@@ -50,46 +50,54 @@ router.post("/adduser", (req, res)=>{
     var password = req.body.password;
     var first_name= req.body.first_name;
     var last_name= req.body.last_name;
-    var question1= req.body.question;
-    var answer1= req.body.answer;
-    var question2= req.body.question;
-    var answer2= req.body.answer;
+    var question1= req.body.question1;
+    var answer1= req.body.answer1;
+    var question2= req.body.question2;
+    var answer2= req.body.answer2;
     var city= req.body.city;
     var country= req.body.country;
     var email= req.body.email;
     var interest1= req.body.interest1;
     var interest2= req.body.interest2;
     var interestrest= req.body.interests;
+    console.log(username);
     if(username.length<3 || username.length>8 || !(/^[a-zA-Z]+$/.test(username))){
+        console.log("in if 1");
         res.status(400).send("username not according to requests")
     }
     else if(password.length<5 || password.length>10 || !(/^[a-zA-Z0-9]+$/.test(password))){
+        console.log("in if 2");
         res.status(400).send("password not according to requests")
     }
-    else if(!countries.includes(country)){  res.status(400).send("country not valid")}
+    else if(!countries.includes(country)){  console.log("in if 3"); res.status(400).send("country not valid");}
     else{
+        console.log("in if 4");
         var results = DButilsAzure.execQuery("INSERT INTO users " +
-            "(username,password,first_name,last_name,question,answer,city,country,email,interest1,interest2,interestrest) " +
+            "(username,password,first_name,last_name,question1,answer1,city,country,email,interest1,interest2,interestrest,question2,answer2) " +
             "VALUES(\'"+username+"\'," +
             "\'"+password+ "\'," +
             "\'"+first_name+"\'," +
             "\'"+last_name+"\'," +
             "\'"+question1+"\'," +
             "\'"+answer1+"\'," +
-            "\'"+question2+"\'," +
-            "\'"+answer2+"\'," +
             "\'"+city+"\'," +
             "\'"+country+"\'," +
             "\'"+email+"\'," +
             "\'"+interest1+"\'," +
             "\'"+interest2+"\'," +
-            "\'"+interestrest+"\')");
+            "\'"+interestrest+"\',"+
+            "\'"+question2+"\'," +
+            "\'"+answer2+"\')");
+        console.log("in if 4 continue");
         results.then(function(result){
+            console.log("ok");
             res.status(200).send("User Add Confirmed");
         }).catch(function(error) {
+            console.log(error);
             if(username.length>8){ res.status(400).send("User name to long");}
             else{res.status(400).send("User already registered ");}
         });}
+    console.log("done");
 });
 function getCountries() {
     const parser = new xml2js.Parser({explicitArray: false});
