@@ -16,6 +16,7 @@ router.get("/categories", (req,res)=>{
     var cats = DButilsAzure.execQuery("SELECT DISTINCT category FROM pois;");
     cats.then(function(result){
         res.status(200).send(result);
+        console.log(result);
     }).catch(function(error) {
         res.status(500).send("An Error occured");
     });
@@ -208,5 +209,34 @@ router.get("/logged/POI_getList", (req,res)=>{
         res.status(200).send(result);
     }).catch(function(error){
         res.status(500).send("Internal Error, please try again later");
+    });
+});
+
+/**
+ * returns a list of the 2 top reviews a POI has
+ */
+router.get("/getTopReviews/:poi", (req,res)=>{
+    let poi = req.params.poi;
+    var result = DButilsAzure.execQuery("SELECT TOP(2) * FROM poi_review WHERE POIID="+poi+" ORDER BY date DESC");
+    result.then(function(reslt){
+        res.status(200).send(reslt);
+    }).catch(function(error){
+        res.status(500).send("Internal Error, please try again later");
+    });
+});
+
+/**
+ * returns a list of the 2 top reviews a POI has
+ */
+router.get("/getTopReviewsByName/:poi", (req,res)=>{
+    let poi = req.params.poi;
+    var name = DButilsAzure.execQuery("SELECT ID FROM pois WHERE name=\'"+poi+"\'");
+    name.then(function(reslt_name){
+        var result = DButilsAzure.execQuery("SELECT TOP(2) * FROM poi_review WHERE POIID="+reslt_name[0]['ID']+" ORDER BY date DESC");
+        result.then(function(reslt){
+            res.status(200).send(reslt);
+        }).catch(function(error){
+            res.status(500).send("Internal Error, please try again later");
+        });
     });
 });

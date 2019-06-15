@@ -197,13 +197,13 @@ router.post("/logged/deletePOI4user", (req,res) => {
 });
 
 
-router.get("/logged/getpassword/:username/:answer1/:answer2", (req,res)=> {
+router.get("/getpassword/:username/:answer1/:answer2", (req,res)=> {
     let username = req.params.username;
     let answer1 = req.params.answer1;
     let answer2 = req.params.answer2;
     var results = DButilsAzure.execQuery("SELECT answer1,answer2 FROM users where username=\'"+username+"\'");
     results.then(function (result) {
-        if(result[0].answer1 === answer1 && result[0].answer2 === answer2) {
+        if(result[0].answer1 === answer1 || result[0].answer2 === answer2) {
             var results2 = DButilsAzure.execQuery("SELECT password FROM users WHERE username = \'"+username+"\'");
             results2.then(function (result2) {
                 res.status(200).send(result2[0].password);
