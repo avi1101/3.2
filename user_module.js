@@ -8,6 +8,7 @@ module.exports = router;
 router.use(myParser.urlencoded({extended: true}));
 router.use(express.json());
 
+
 /**
  * this method returns the user record
  * if - the user is an admin, it will return the record of the given user
