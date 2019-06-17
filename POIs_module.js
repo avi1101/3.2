@@ -105,6 +105,29 @@ router.get('/getpoibyname/:name', (req,res)=> {
             res.status(500).json({message:err+'             Error on the server. try again later22.'});
         });
 });
+//TODO: added this because we needed to get POI by ID when searching for user's POIS
+router.get('/getpoibyID/:id', (req,res)=> {
+    let name = req.params.id;
+    if(name==null){
+        return res.status(400).send("name is null");}
+    let getidQuery = "SELECT * FROM pois WHERE ID = \'"+name+"\'";
+    let response= DButilsAzure.execQuery(getidQuery);
+    response.then(function(result){
+        if (result.length === 0) res.status(400).json({message: 'POI not in system'});
+        else {
+            let views = result[0].viewed_num + 1;
+            let increaseQuery = "UPDATE pois SET viewed_num =\'"+views+"\' WHERE name = \'"+name+"\'";
+            res.status(200).send(result[0]);
+            DButilsAzure.execQuery(increaseQuery).then((response) =>{
+            }).catch((err) =>{
+                res.status(500).json({message:'Error on the server. try again later11.'});
+            });
+        }
+    })
+        .catch((err) =>{
+            res.status(500).json({message:err+'             Error on the server. try again later22.'});
+        });
+});
 
 router.get("/rand3POI/:rank", (req,res)=> {
     let rank = req.params.rank;
