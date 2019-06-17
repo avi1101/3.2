@@ -7,6 +7,7 @@
 const DButilsAzure = require('./DButils.js');
 const express = require("express");
 const xml2js = require('xml2js');
+var cors = require('cors');
 var myParser = require("body-parser");
 const fs = require('fs-mode');
 const jwt = require("jsonwebtoken");
@@ -20,6 +21,13 @@ var secret = "Max1,000,000IraqiDinars";
 
 app.use(myParser.urlencoded({extended: true}));
 app.use(express.json());
+app.use(express.json(),function(req, res, next) {
+    express.json();
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+app.use(cors());
 app.use("/logged", (req, res, next)=>{
     const token = req.header("x-auth-token");
     if (!token)

@@ -100,6 +100,11 @@ router.post("/adduser", (req, res)=>{
         });}
     console.log("done");
 });
+
+router.get("/getcountries",(req,res)=> {
+    res.status(200).send(countries);
+});
+
 function getCountries() {
     const parser = new xml2js.Parser({explicitArray: false});
     const xml = fs.readFileSync(__dirname + '\\countries.xml', {encoding: 'utf-8'});
