@@ -38,7 +38,7 @@ app.use("/logged", (req, res, next)=>{
             req.decoded = decoded;
             next();
         } catch (exception) {
-            res.status(400).send("Invalid token.");
+            res.status(401).send("Access denied, Invalid token."); //TODO: added this to classify the error
         }
 });
 app.use("/", au);

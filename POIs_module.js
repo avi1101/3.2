@@ -69,6 +69,26 @@ router.post("/logged/delete/:POIid", (req,res) => {
         res.status(401).send("only an admin can perform this action");
 });
 
+//TODO: added this
+/**
+ * delete a POI for user
+ * @param = POIid
+ */
+router.post("/logged/deleteForUser/:POIid/:user", (req,res) => {
+    if(req.decoded.admin) {
+        var poi = req.params.POIid;
+        var user = req.params.user;
+        var results = DButilsAzure.execQuery("DELETE FROM user_poi WHERE POIID=\'" + poi + "\' AND username=\'"+user+"\'");
+        results.then(function (result) {
+            res.status(200).send("POI deleted for user");
+        }).catch(function (error) {
+            res.status(404).send("Could not delete the POI, it does not exist");
+        });
+    }
+    else
+        res.status(401).send("only an admin can perform this action");
+});
+
 /**
  * returns a list of POIs that belong to category
  * @params = category
@@ -263,3 +283,5 @@ router.get("/getTopReviewsByName/:poi", (req,res)=>{
         });
     });
 });
+
+//TODO: add a method to delete a POI for user
