@@ -128,6 +128,7 @@ router.get('/getpoibyname/:name', (req,res)=> {
 //TODO: added this because we needed to get POI by ID when searching for user's POIS
 router.get('/getpoibyID/:id', (req,res)=> {
     let name = req.params.id;
+    console.log(name);
     if(name==null){
         return res.status(400).send("name is null");}
     let getidQuery = "SELECT * FROM pois WHERE ID = \'"+name+"\'";

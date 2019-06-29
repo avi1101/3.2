@@ -217,3 +217,34 @@ router.get("/getpassword/:username/:answer1/:answer2", (req,res)=> {
         res.status(400).send("could not ret try again later");
     });
 });
+
+//TODO: added this
+router.get("/logged/getOrder/:username", (req, res)=>{
+    let username = req.params.username;
+    var results = DButilsAzure.execQuery("SELECT CustomeOrder FROM user_orders where userID=\'"+username+"\'");
+    results.then(function(response){
+        if(response[0].length < 1)
+            res.status(404).send("not found");
+        else
+            res.status(200).send(response[0]);
+    }).catch(function(error){
+        res.status(404).send("username not found");
+    });
+});
+
+//TODO: added this
+router.get("/logged/saveOrder/:username/:order", (req, res)=>{
+    let username = req.params.username;
+    let order = req.params.order;
+    var result = DButilsAzure.execQuery("INSERT INTO user_orders (userID, CustomeOrder) VALUES(\'" + username + "\',\'" + order + "\')");
+    result.then(function(response){
+        res.status(200).send("added");
+    }).catch(function(error){
+        var update = DButilsAzure.execQuery("UPDATE user_orders SET CustomeOrder=\'"+order+"\' WHERE userID=\'"+username+"\'");
+        update.then(function(upres){
+            res.status(200).send("updated");
+        }).catch(function(uperror){
+            res.status(500).send("could not add the order to the given user");
+        })
+    });
+});
